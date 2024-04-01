@@ -1,0 +1,192 @@
+# Setup ------------------------------------------------------------------------
+
+# Clear memory
+rm(list = ls(all=T))
+
+
+# Load packages and install if not installed
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  tidyverse,      # grammar of data and graphics
+  here,           # relative file pathways
+  showtext,       # custom fonts
+  ggtext,         # fancy text in plots
+  paletteer,      # color palettes and more
+  fontawesome,    # emojis etc
+  camcorder,      # record making ggplot
+  gridExtra,      # combine multiple plots
+  glue,           # glue together formatted text
+  colorspace      # fancy stuff with colors 
+)  
+
+
+# Load and Wrangle Data --------------------------------------------------------
+
+# Read data set(s) directly from github
+myData <- readr::read_csv(here("City_Density/Data/City_Density_Data.csv"))
+
+# Function to generate plotting coordinates
+coord_generator <- function(city) {
+  N = myData %>%
+    filter(City == city) %>%
+    pull(People_Km_Sq) / 50 %>% round()
+  
+  set.seed(97) # So that the people end up in the same spots
+  
+  out <- data.frame(
+    x = runif(n = N, min = 0, max = 100),
+    y = runif(n = N, min = 0, max = 100)
+  ) %>%
+    arrange(desc(y))
+  
+  return(out)
+}
+
+# Generate X and Y coordinates for the three cities 
+edmonton <- coord_generator("Edmonton")
+amsterdam <- coord_generator("Amsterdam")
+manila <- coord_generator("Manila")
+
+
+
+# Set Up Aesthetics ------------------------------------------------------------
+
+
+## Save color palette
+
+myPal <- paletteer::paletteer_d("lisa::C_M_Coolidge")[1]
+
+back_colour =  paletteer::paletteer_d("lisa::C_M_Coolidge")[3] %>% lighten(0.25)
+strong_text = paletteer::paletteer_d("lisa::C_M_Coolidge")[5] %>% darken(0.9)
+weak_text = lighten(strong_text, 0.1)
+
+
+## Fonts
+
+# Solid symbols
+font_add(family = "fa-solid",
+         regular = "C:/USERS/GVAND/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/Font Awesome 6 Free-Solid-900.otf")
+
+# Social Media Symbols
+font_add(family = "Font Awesome 6 Brands",
+         regular = "C:/USERS/GVAND/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/Font Awesome 6 Brands-Regular-400.otf")
+
+#Main Font
+font_add(family = "Roboto", 
+         regular = "C:/USERS/GVAND/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/ROBOTO-REGULAR.ttf",
+         bold = "C:/USERS/GVAND/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/ROBOTO-BOLD.ttf")
+showtext.auto()
+
+# Make the fonts work
+showtext_auto()
+
+title_font = "Robot Slab"
+main_font = "Roboto"
+
+
+# Save Theme as Function (Kind of Unnecessary)
+my_theme <- function(base_size = 10) {
+  theme_minimal(base_size = base_size)+
+    theme(
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = back_colour,
+                                      color = back_colour),
+      plot.background = element_rect(fill = back_colour, 
+                                     colour = back_colour),
+      plot.caption.position = "plot",
+      # plot.title.position = "plot",
+      plot.title = element_markdown(size = rel(1.5),
+                                          family = main_font,
+                                          color = strong_text,
+                                          hjust = 0.5,
+                                          margin = margin(8, 0, 12, 8)),
+      plot.subtitle = element_textbox_simple(size = rel(1.1),
+                                             family = main_font,
+                                             colour = weak_text,
+                                             margin = margin(0, 0, 12, 8)), 
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text = element_blank(),
+      plot.caption = element_markdown(size = rel(0.8),
+                                      colour = weak_text,
+                                      # family = "Arial",
+                                      hjust = c(0), 
+                                      margin = margin(5,0,0,8)),
+      text = element_text(colour = weak_text, lineheight = 1.1)
+    )
+}
+
+# Plotting ---------------------------------------------------------------------
+
+# Save Some Stuff for the plot 
+
+github_icon <- "&#xf09b"
+github_username <- "GregoryVdvinne"
+
+twitter_icon <- "\uf099"
+twitter_username <- "@GregoryVdvinne" 
+
+linkedin_icon <- "\uf08c"
+linkedin_username <- "Gregory Vander Vinne"
+
+person_symbol <- "\uf183"
+
+
+my_caption <- glue("<b>Data: </b> Statistics Canada and World Population Review   ",
+                   " \n <b>Graphic: </b>",
+                   "<span style='font-family:\"Font Awesome 6 Brands\";'>{github_icon};</span>
+                   <span style='color: #271D1BFF'>{github_username}   </span>", 
+                   "<span style='font-family:\"Font Awesome 6 Brands\";'>{twitter_icon};</span>
+                   <span style='color: #271D1BFF'>{twitter_username}   </span>",
+                   "<span style='font-family:\"Font Awesome 6 Brands\";'>{linkedin_icon};</span>
+                   <span style='color: #271D1BFF'>{linkedin_username}</span>")
+
+
+
+# Function to make the plot for one city
+
+plot_func <- function(data, title = "") {
+  ggplot() + 
+    geom_text(data = data, aes(x = x, y = y),
+              family = "fa-solid", label = person_symbol, 
+              size = 5, alpha = 0.8, color = myPal) +
+    labs(title = title) + 
+    xlim(-1,101) + 
+    ylim(-1,101) +
+    my_theme()
+}
+
+p1 <- plot_func(edmonton, title = paste("If This is How Densely Populated <b>Edmonton</b> is...")) + 
+  # Description of what one person represents
+  geom_point(data = data.frame(x = edmonton[1,]$x, 
+                               y = edmonton[1,]$y), 
+             aes(x=x, y=y),
+             color = strong_text, shape = 1, size = 10) + 
+  geom_text(data = data.frame(x = edmonton[1,]$x+18, 
+                              y = edmonton[1,]$y + 1), 
+            aes(x=x, y=y),
+            label = paste("Represents 20 people", "\n per square kilometer "), 
+            family = main_font, 
+            size = 3) + 
+  geom_curve(data = data.frame(x = edmonton[1,]$x+10, xend = edmonton[1,]$x+2,
+                               y = edmonton[1,]$y + 5, yend = edmonton[1,]$y+1), 
+             aes(x=x, y=y, xend = xend, yend = yend),
+             color = strong_text,
+             curvature = 0.25,
+             angle = 40,
+             arrow = arrow(length = unit(0.03, "npc"))
+             )
+
+p2 <- plot_func(amsterdam, title = "...Then This is How Densely Populated <b>Amsterdam</b> is...")
+p3 <- plot_func(manila, title = "...and This is How Densely Populated <b>Manila</b> is.") + 
+  labs(caption = my_caption)
+
+
+combined_plot <- gridExtra::grid.arrange(p1,p2,p3, ncol = 1)
+
+# Attempt to ggsave for higher resolution
+  # Has a issue with the font for the ggtext. Can't find font awesome and turns people to rectangles
+gridExtra::grid.arrange(p1,p2,p3, ncol = 1)
+g <- arrangeGrob(p1, p2, p3, nrow=3) #generates g
+ggsave(file=here("City_Density/city_density_ggsaved.png"), g) #saves g
+
