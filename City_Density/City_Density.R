@@ -11,12 +11,10 @@ pacman::p_load(
   here,           # relative file pathways
   showtext,       # custom fonts
   ggtext,         # fancy text in plots
-  paletteer,      # color palettes and more
+  paletteer,      # color palettes
   fontawesome,    # emojis etc
-  camcorder,      # record making ggplot
-  gridExtra,      # combine multiple plots
   glue,           # glue together formatted text
-  ggpubr,
+  ggpubr,         # to combine multiple plots w/ ggarrange()
   colorspace      # fancy stuff with colors 
 )  
 
@@ -80,7 +78,6 @@ font_add(family = "Roboto",
 # Make the fonts work
 showtext_auto()
 
-title_font = "Robot Slab"
 main_font = "Roboto"
 
 
@@ -109,7 +106,6 @@ my_theme <- function(base_size = 10) {
       axis.text = element_blank(),
       plot.caption = element_markdown(size = rel(0.8),
                                       colour = weak_text,
-                                      # family = "Arial",
                                       hjust = c(0), 
                                       margin = margin(5,0,0,8)),
       text = element_text(colour = weak_text, lineheight = 1.1)
@@ -180,12 +176,14 @@ p1 <- plot_func(edmonton, title = paste("If This is How Densely Populated <b>Edm
              )
 
 p2 <- plot_func(amsterdam, title = "...Then This is How Densely Populated <b>Amsterdam</b> is...")
+
 p3 <- plot_func(manila, title = "...and This is How Densely Populated <b>Manila</b> is.") + 
   labs(caption = my_caption)
 
 # Combined Plot
 g <- ggarrange(p1, p2, p3, ncol = 1)
 
+# Save Combined Plot
 showtext_opts(dpi = 300)
-ggsave(file=here("City_Density/city_density_ggsaved.png"), g) #saves g
+ggsave(file=here("City_Density/city_density_ggsaved.png"), g) # saves g
 
