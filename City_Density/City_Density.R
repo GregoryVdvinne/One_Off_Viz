@@ -16,6 +16,7 @@ pacman::p_load(
   camcorder,      # record making ggplot
   gridExtra,      # combine multiple plots
   glue,           # glue together formatted text
+  ggpubr,
   colorspace      # fancy stuff with colors 
 )  
 
@@ -75,7 +76,6 @@ font_add(family = "Font Awesome 6 Brands",
 font_add(family = "Roboto", 
          regular = "C:/USERS/GVAND/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/ROBOTO-REGULAR.ttf",
          bold = "C:/USERS/GVAND/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/ROBOTO-BOLD.ttf")
-showtext.auto()
 
 # Make the fonts work
 showtext_auto()
@@ -94,11 +94,11 @@ my_theme <- function(base_size = 10) {
       plot.background = element_rect(fill = back_colour, 
                                      colour = back_colour),
       plot.caption.position = "plot",
-      # plot.title.position = "plot",
-      plot.title = element_markdown(size = rel(1.5),
+      plot.title.position = "plot",
+      plot.title = element_textbox_simple(size = rel(1.5),
                                           family = main_font,
                                           color = strong_text,
-                                          hjust = 0.5,
+                                          halign = 0.5,
                                           margin = margin(8, 0, 12, 8)),
       plot.subtitle = element_textbox_simple(size = rel(1.1),
                                              family = main_font,
@@ -157,17 +157,19 @@ plot_func <- function(data, title = "") {
 }
 
 p1 <- plot_func(edmonton, title = paste("If This is How Densely Populated <b>Edmonton</b> is...")) + 
-  # Description of what one person represents
+  # Circle around the highest-up person
   geom_point(data = data.frame(x = edmonton[1,]$x, 
                                y = edmonton[1,]$y), 
              aes(x=x, y=y),
              color = strong_text, shape = 1, size = 10) + 
+  # Description of what one person represents
   geom_text(data = data.frame(x = edmonton[1,]$x+18, 
                               y = edmonton[1,]$y + 1), 
             aes(x=x, y=y),
             label = paste("Represents 20 people", "\n per square kilometer "), 
             family = main_font, 
             size = 3) + 
+  # Arrow to the point
   geom_curve(data = data.frame(x = edmonton[1,]$x+10, xend = edmonton[1,]$x+2,
                                y = edmonton[1,]$y + 5, yend = edmonton[1,]$y+1), 
              aes(x=x, y=y, xend = xend, yend = yend),
@@ -181,12 +183,9 @@ p2 <- plot_func(amsterdam, title = "...Then This is How Densely Populated <b>Ams
 p3 <- plot_func(manila, title = "...and This is How Densely Populated <b>Manila</b> is.") + 
   labs(caption = my_caption)
 
+# Combined Plot
+g <- ggarrange(p1, p2, p3, ncol = 1)
 
-combined_plot <- gridExtra::grid.arrange(p1,p2,p3, ncol = 1)
-
-# Attempt to ggsave for higher resolution
-  # Has a issue with the font for the ggtext. Can't find font awesome and turns people to rectangles
-gridExtra::grid.arrange(p1,p2,p3, ncol = 1)
-g <- arrangeGrob(p1, p2, p3, nrow=3) #generates g
+showtext_opts(dpi = 300)
 ggsave(file=here("City_Density/city_density_ggsaved.png"), g) #saves g
 
